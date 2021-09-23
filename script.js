@@ -3,10 +3,11 @@ var classifications = "Invertebrate,Invertebrate,Urban Legend,Plant Life,Mammal,
 var w = window.innerWidth;
 var h = window.innerHeight;
 var i; // generic variable for loops
+var imageMode = 'linear stack'; // for layout options
 
-// rn: hoping to clean up positioning/margin code
+// linear stack: responsive issues (need to scroll a little to see full if window is super long and narrow)
 
-// 1.    background > should i restrict to certain colors?
+// --------------- 1. background > should i restrict to certain colors? ---------------
 function random_background_color(){
   var die = Math.random();
   var r, g, b, myColor;
@@ -32,76 +33,144 @@ function random_background_color(){
 }
 random_background_color();
 
-// 2.     images > was hoping to use naturalWidth/Height to maintain dimensions; this is a rough fix
+
+
+// --------------- 2. images ------------------------------------------------------------
 
 // determine image widths
-var thumbw = 170 * 1.25;  // thumbnail
-var thumbh = 95 * 1.25;   // thumbnail
-var ganw = 346 * 0.75;    // generated
+var thumbw = 170 // * 1.25;  // thumbnail
+var thumbh = 95 // * 1.25;   // thumbnail
+var ganw = 346 // * 0.75;    // generated
 var finw = 256;           // final
 
-// layout options: randomize here
-var imageMode = '0';
-var marginsVert = 0.1 * h;  // 10% space, top + bottom
-var marginsHori = 0.1 * w;  // 10% space, left + right
-
-
-
-// for later: positioning
+// images: layout, spacing, positioning
 var horiSpace, vertSpace;
+var pageMargin, interImgSpacing;
 
-// 0: left to right, small gen
-if (imageMode.includes('0')) {
-  ganw *= 0.5;
+// resize images (columns)
+if (imageMode.includes('linear')) {
+  horiSpace = 0;
+  vertSpace = 0;
+
+  pageMargin = w * 0.03; // 3% margin on all sides
+  interImgSpacing = w * 0.01;
+  var widecolw = w * 0.4;
+  var narcolw = w - (2 * pageMargin) - (2 * widecolw) - interImgSpacing;
+
+  var temph = (thumbh * widecolw) / thumbw;
+  thumbh = temph;
+  thumbw = widecolw;
+  finw = widecolw;
+  ganw = narcolw;
 }
-if (imageMode.includes('stack')) {
-  // stack it
-  console.log('stacced')
+// option 1: linear (left to right)
+
+// option 2: [WORK ON THIS] tabloid stacked. only variable position would be fin, i think
+// >>>>> SIZING ISSUES: NEED TO MAKE RESPONSIVE
+var longestSide = w;
+// if (h < w) {
+//   longestSide = h;
+// }
+if (imageMode.includes('tabloid')) {
+  pageMargin = longestSide * 0.1;
+  interImgSpacing = longestSide * 0.02;
+  // conversions
+  // introduce var rowItemLeft
+  var tempw = (longestSide - (2 * pageMargin));
+  var temph = ((tempw * thumbh)/thumbw);
+  thumbw = tempw;
+  thumbh = temph;
+  ganw = 0.25 * (thumbw - interImgSpacing);
+  finw = thumbw - ganw - interImgSpacing;
 }
+
+// 0.2, 0.4, 0.6
+
+// images: setting them down
 
 var sets = ['orig/thumbnails/'+thumbw+'/'+thumbh,'gen/gan/'+ganw+'/'+ganw,'fin/isolated/'+finw+'/'+finw];
 for (i = 0; i < sets.length; i++) {
   // organize data
-  var sets_id = sets[i].split('/')[0];
-  var sets_folder = sets[i].split('/')[1];
-  var imageW = sets[i].split('/')[2];
-  var imageH = sets[i].split('/')[3];
+  var sets_id = sets[i].split('/')[0];      // id (which div is this)
+  var sets_folder = sets[i].split('/')[1];  // folder name (images)
+  var imageW = sets[i].split('/')[2];       // image width (by type)
+  var imageH = sets[i].split('/')[3];       // image height (by type)
 
-  // set image dimensions
+  // set image dimensions, make background cover
   var myDiv = document.getElementById(sets_id);
   myDiv.style.position = 'absolute';
   myDiv.style.width = imageW + 'px';
   myDiv.style.height = imageH + 'px';
   myDiv.style.backgroundImage = 'url(images/' + sets_folder + '/' + randSetNum + '.png)';
   myDiv.style.backgroundSize = 'cover';
+  
+  // set horiSpace and vertSpace (push to position)
+  if (imageMode.includes('linear')) {
+    // horizontal + vertical spacing 
+    if (i == 0) {
+      horiSpace = pageMargin;
+    }
+    if (i == 1) {
+      horiSpace += widecolw + interImgSpacing;
+    }
+    if (i == 2) {
+      horiSpace += narcolw + interImgSpacing;
+    }
+    // vertical spacing
+    vertSpace = Math.random() * (h - imageH - (pageMargin * 2)) + pageMargin; // max min formula thing? might need separate heights for different sets
+  }
 
+  if (imageMode.includes('tabloid')) {
+    // set horispace and vert space
+    if ((i == 0) | (i == 1)) {
+      horiSpace = pageMargin;
+    }
+    else { // i == 2
+      horiSpace = pageMargin + ganw + interImgSpacing;
+    }
+    if (i == 0) { vertSpace = interImgSpacing; }
+    else { vertSpace = interImgSpacing + thumbh + interImgSpacing; } // i == 1, i == 2
+  }
 
-  // position >>> z index?
-  myDiv.style.marginTop = marginsVert + 'px';
-  if (i == 0) { horiSpace = (marginsHori*0.5); }
-  if (i == 1) { horiSpace = (thumbw*1.5);}
-  else if (i == 2) { horiSpace = ((thumbw*1.25)+marginsHori) + ganw;}
-  vertSpace = Math.random() * (0.5 * h) + (marginsVert);
+  myDiv.style.left = horiSpace + 'px';
+  myDiv.style.top = vertSpace + 'px';
 
-  myDiv.style.marginLeft = horiSpace + 'px';
-  myDiv.style.marginTop = vertSpace + 'px';
+  // LINEAR, STACKED
+  if (imageMode.includes('linear') && imageMode.includes('stack')) {
+    // random horizontal movement +- 0.2 w
+    var horiRange = 0.1;
+    horiRange *= w;
+    if (i == 0) { horiRange *= (-1); }
+    var horiDifferential = (Math.random() * horiRange) - horiRange;
+    // random vertical movement: +- 0.25 h
+    var vertRange = 0.05;
+    vertRange *= h;
+    var vertDifferential = (Math.random() * vertRange) - vertRange;
+    myDiv.style.marginLeft = horiDifferential + 'px';
+    myDiv.style.marginTop = vertDifferential + 'px'; 
+  }
 
+  // TABLOID, STACKED
+  if (imageMode.includes('tabloid') && imageMode.includes('stack')) {
+    // blah
+  }
+
+  // POSSIBLY EXTRANEOUS shadow for #gen (if stacked)
+  if (imageMode.includes('stack') && (i == 1)) {
+    myDiv.style.boxShadow = '0px 0px 30px 0px black';
+  }
 
   // set border color for #fin
   if (i == 2) {
     var borderColor;
     if (classifications[randSetNum-1].includes('Invertebrate')) { borderColor = 'white';}
     else if (classifications[randSetNum-1].includes('Urban')) { borderColor = 'gray';} 
-    else if (classifications[randSetNum-1].includes('Plant')) { borderColor = 'chartreuse';} 
-    else { borderColor = 'red';}
+    else if (classifications[randSetNum-1].includes('Plant')) { borderColor = 'green';} // was 'chartreuse' and 'blue'
+    else { borderColor = 'yellow';} // mammal — was 'red'
+    //borderColor = 'rgba(0,0,0,0)'; // temp
     myDiv.style.border = '1px solid ' + borderColor;
-  }
+  } // border color connotations: green = jackpot, red = wrong/bad, white = neutral. maybe sub out for web1 solid css colors?
 }
-
-
-// all that's changed: 
-//    size of image
-//    orientation: how spaced out — should there be diagonals?
 
 
 
