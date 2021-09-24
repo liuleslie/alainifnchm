@@ -3,7 +3,7 @@ var classifications = "Invertebrate,Invertebrate,Urban Legend,Plant Life,Mammal,
 var w = window.innerWidth;
 var h = window.innerHeight;
 var i; // generic variable for loops
-var imageMode = 'linear '; // for layout options
+var imageMode = 'linear stack'; // for layout options
 
 
 // --------------- 1. background > should i restrict to certain colors? ---------------
